@@ -1,0 +1,31 @@
+name: Keep GitHub Green
+
+on:
+  schedule:
+    - cron: '15 9 * * *'  # UTC 时间，每天运行一次（可根据你的时区调整）
+  workflow_dispatch:     # 允许手动触发测试
+
+permissions:
+  contents: write
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update heartbeat file
+        run: |
+          echo "$(date -u +%F) — daily green" >> .keepalive
+
+      - name: Commit & Push
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .keepalive
+            git commit -m "chore: daily heartbeat $(date -u +%F)"
+            git push
+          else
+            echo "No changes."
+          fi
